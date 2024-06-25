@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Analyzer</title>
+</head>
+
+<body>
+    <h1>App Analyzer</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput">
+        <button type="button" onclick="uploadFile()">Upload & Analyze</button>
+    </form>
+    <form id="urlForm">
+        <input type="text" name="url" id="urlInput" placeholder="Enter URL">
+        <button type="button" onclick="uploadURL()">Upload URL</button>
+    </form>
+    <form id="qrcodeForm" enctype="multipart/form-data">
+        <input type="file" name="file" id="qrcodeInput">
+        <button type="button" onclick="uploadQRCode()">Upload QR Code</button>
+    </form>
+    <button type="button" onclick="showReport()">Show Report</button>
+    <div id="report"></div>
+
+    <script>
+        let ws;
+        let reportData = null;
+
+        function connectWebSocket() {
+            ws = new WebSocket("ws://localhost:8080/ws");
+            ws.onopen = function () {
+                console.log("WebSocket connection opened");
+            };
+            ws.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'report') {
+                    reportData = data.message;
+                    console.log("Report received");
+                }
+            };
+            ws.onclose = function () {
+                console.log("WebSocket connection closed");
+                window.close(); // Close the browser window when the WebSocket connection is closed
+            };
+        }
+
+        function uploadFile() {
+            const formData = new FormData(document.getElementById('uploadForm'));
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('report').innerText = data.message;
+                });
+        }
+
+        function uploadURL() {
+            const url = document.getElementById('urlInput').value;
+            fetch('/upload/url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('report').innerText = data.message;
+                });
+        }
+
+        function uploadQRCode() {
+            const formData = new FormData(document.getElementById('qrcodeForm'));
+            fetch('/upload/qrcode', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('report').innerText = data.message;
+                });
+        }
+
+        function showReport() {
+            if (reportData) {
+                document.getElementById('report').innerText = reportData;
+            } else {
+                document.getElementById('report').innerText = 'No report available';
+            }
+        }
+
+        window.onload = connectWebSocket;
+        window.onbeforeunload = function () {
+            if (ws) {
+                ws.close();
+            }
+        };
+    </script>
+</body>
+
+</html>
