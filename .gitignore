@@ -1,0 +1,14 @@
+/Dataset/
+/utils/
+/venv/
+/logs/
+/uploads/
+/logs/
+/cmd/cache/
+/endpoints/
+/uploads/
+/*-decompiled/
+*.keras
+*.npy
+/.mypy_cache/
+/scripts/
